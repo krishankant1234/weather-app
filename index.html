@@ -3,13 +3,537 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Weather App - JavaScript</title>
-    <link rel="stylesheet" href="https://fontawesome.com/.css">
-    <link rel="stylesheet" href="https://boxicons.com/.css">
-    <link rel="stylesheet" href="style.css">
-</head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Weather App - JavaScript</title>
+<!--     <link rel="stylesheet" href="style.css"> -->
+    <style>
+        :root {
+            --bg-color1: #212529;
+            --bg-color2: #2a2b2d;
+            --aqi-1: #d4e157;
+            --aqi-2: #ffee58;
+            --aqi-3: #ffca28;
+            --aqi-4: #ff7043;
+            --aqi-5: #ef5350;
+        }
 
-<box-icon name='search'></box-icon>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--bg-color1);
+            color: #fff;
+            font-family: sans-serif;
+            padding: 0 15px;
+            /* Added overflow-x: hidden to prevent horizontal scroll on small screens */
+            overflow-x: hidden;
+        }
+
+        hr {
+            margin-bottom: 10px;
+        }
+
+        .container {
+            max-width: 1200px; /* Added max-width to container for larger screens */
+            margin: 0 auto; /* Center the container */
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-color1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 15px 0;
+            z-index: 100; /* Ensure header stays on top */
+            flex-wrap: wrap; /* Allow header items to wrap on smaller screens */
+            gap: 10px; /* Add some space between items when wrapped */
+        }
+
+        .header h2 {
+            flex-shrink: 0; /* Prevent title from shrinking */
+        }
+
+        .header .weather-input {
+            display: flex;
+            gap: 10px;
+            flex-grow: 1; /* Allow input group to take available space */
+            flex-wrap: wrap; /* Allow input and buttons to wrap */
+            justify-content: flex-end; /* Align to the right by default */
+        }
+
+        .header #city_input {
+            background-color: var(--bg-color2);
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 25px;
+            color: #fff;
+            flex-grow: 1; /* Allow input to grow */
+            min-width: 180px; /* Minimum width for input */
+
+            &:focus {
+                outline: none;
+            }
+        }
+
+        .header #searchBtn,
+        .header #locationBtn {
+            border: none;
+            font-size: 16px;
+            padding: 12px;
+            border-radius: 25px;
+            cursor: pointer;
+            display: flex; /* Make buttons flex containers */
+            align-items: center; /* Vertically center content */
+            gap: 5px; /* Space between icon and text */
+            white-space: nowrap; /* Prevent text from wrapping */
+        }
+
+        .header #searchBtn {
+            background-color: #fff;
+        }
+
+        .header #searchBtn:hover {
+            background-color: #ababab;
+        }
+
+        .header #locationBtn {
+            background-color: #ea6e4b;
+        }
+
+        .header #locationBtn:hover {
+            background-color: #ea4b1f;
+        }
+
+        /* Styling for the image tags within buttons */
+        .header #searchBtn img,
+        .header #locationBtn img {
+            height: 16px; /* Adjusted height for better visibility */
+            width: auto;
+        }
+
+        .card {
+            background-color: var(--bg-color2);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .card h2 {
+            font-size: 32px;
+            font-weight: 500;
+        }
+
+        .weather-data {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .weather-data .weather-left {
+            grid-column: span 1;
+        }
+
+        .weather-data .weather-left .current-weather {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weather-data .weather-left .current-weather h2 {
+            margin: 7px 0;
+        }
+
+        .weather-data .weather-left .current-weather p {
+            color: #fff;
+        }
+
+        .weather-data .weather-left .card-footer p {
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex; /* Make these flex containers */
+            align-items: center; /* Align icon and text */
+            gap: 8px; /* Space between icon and text */
+        }
+
+        .weather-data .weather-left .card-footer img {
+            height: 16px; /* Ensure icon size consistency */
+            width: auto;
+        }
+
+        .weather-data .weather-left .forecast-item {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            place-items: center;
+            margin-bottom: 15px;
+            text-align: center; /* Center text within forecast items */
+        }
+
+        .weather-data .weather-left .forecast-item .icon-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Space between icon and temperature */
+            justify-content: center; /* Center content in icon wrapper */
+        }
+
+        .weather-data .weather-left .forecast-item img {
+            height: 25px;
+            width: auto;
+        }
+
+        .weather-data .weather-right {
+            grid-column: span 3;
+        }
+
+        .weather-data .weather-right h2 {
+            margin-bottom: 10px;
+        }
+
+        .weather-data .weather-right .highlights {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            column-gap: 15px;
+            row-gap: 15px; /* Added row-gap for consistency */
+        }
+
+        .weather-data .weather-right .highlights .card:nth-of-type(1),
+        .weather-data .weather-right .highlights .card:nth-of-type(2) {
+            grid-column: span 2;
+        }
+
+        .weather-data .weather-right .highlights .card-head {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center; /* Align items vertically in card head */
+            flex-wrap: wrap; /* Allow wrapping for long titles/indices */
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index {
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 15px;
+            white-space: nowrap; /* Prevent text wrapping inside AQI status */
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-1 {
+            background-color: var(--aqi-1);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-2 {
+            background-color: var(--aqi-2);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-3 {
+            background-color: var(--aqi-3);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-4 {
+            background-color: var(--aqi-4);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-5 {
+            background-color: var(--aqi-5);
+        }
+
+        .weather-data .weather-right .highlights .air-indices {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* Default to 5 columns for better use of space */
+            place-items: center;
+            gap: 10px; /* Gap between items */
+        }
+        .weather-data .weather-right .highlights .air-indices img {
+            height: 40px;
+            width: auto;
+            grid-column: span 5; /* Make the main icon span all columns */
+            margin-bottom: 10px;
+        }
+
+        .weather-data .weather-right .highlights .air-indices p {
+            text-align: center;
+        }
+        .weather-data .weather-right .highlights .air-indices .item {
+            text-align: center;
+        }
+
+
+        .weather-data .weather-right .highlights .sunrise-sunset {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px; /* Gap between sunrise and sunset items */
+        }
+
+        .weather-data .weather-right .highlights .sunrise-sunset .item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .weather-data .weather-right .highlights .sunrise-sunset .item .icon img {
+            height: 32px;
+            width: auto;
+        }
+
+        .weather-data .weather-right .highlights .sunrise-sunset .item h2 {
+            margin-bottom: 0; /* Remove extra margin */
+            font-size: 24px; /* Adjust font size */
+        }
+        .weather-data .weather-right .highlights .sunrise-sunset .item p {
+            color: #fff; /* Ensure text is visible */
+        }
+
+
+        .weather-data .weather-right .highlights .card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Vertically align items */
+            gap: 10px; /* Space between icon and value */
+        }
+        .weather-data .weather-right .highlights .card-item img {
+            height: 25px; /* Standardize icon size */
+            width: auto;
+        }
+        .weather-data .weather-right .highlights .card-item h2 {
+            font-size: 24px; /* Adjust font size for readability */
+            margin: 0; /* Remove default h2 margin */
+        }
+
+
+        .weather-data .weather-right .hourly-forecast {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            column-gap: 10px;
+            overflow-x: auto; /* Enable horizontal scrolling for hourly forecast */
+            padding-bottom: 10px; /* Add padding for scrollbar visibility */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        .weather-data .weather-right .hourly-forecast .card {
+            text-align: center;
+            min-width: 80px; /* Ensure cards don't get too small */
+            flex-shrink: 0; /* Prevent cards from shrinking */
+        }
+        .weather-data .weather-right .hourly-forecast .card img {
+            height: 25px;
+            width: auto;
+        }
+
+
+        /* Media Queries - Ordered from largest to smallest for clarity */
+
+        @media(max-width: 1100px) {
+            .weather-data {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .weather-data .weather-right {
+                grid-column: span 2;
+            }
+
+            .weather-data .weather-right .highlights {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .weather-data .weather-right .highlights .card:nth-of-type(1) {
+                grid-column: span 3;
+            }
+
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(4, 1fr); /* Adjust for 3 columns */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 4;
+            }
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media(max-width: 1040px) {
+            .weather-data {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .weather-data .weather-right {
+                grid-column: span 1;
+            }
+
+            .weather-data .weather-right .highlights {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .weather-data .weather-right .highlights .card:nth-of-type(1) {
+                grid-column: span 2;
+            }
+
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(3, 1fr); /* Adjust for 2 columns */
+            }
+            .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 3;
+            }
+
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* This media query seems redundant or potentially problematic with the 1040px one.
+           It's setting highlights cards to span 3 columns, which might conflict with 1040px's 2 columns.
+           I'll adjust it to ensure smooth transition.
+           If the intent is for cards to span 3 at specific larger widths, it should be adjusted.
+           For now, I'll integrate it into the 850px breakpoint or remove if conflicting.
+        */
+        /* @media(max-width: 992px) {
+            .weather-data .weather-right .highlights {
+                & .card {
+                    grid-column: span 3;
+                }
+
+                & .air-indices {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+        } */
+
+
+        @media(max-width: 850px) {
+            .weather-data {
+                grid-template-columns: 1fr; /* Stack columns on top of each other */
+            }
+
+            .weather-data .weather-left {
+                grid-column: span 1; /* Reset span for single column layout */
+            }
+            .weather-data .weather-right {
+                grid-column: span 1; /* Reset span for single column layout */
+            }
+
+
+            .weather-data .weather-right .highlights {
+                grid-template-columns: repeat(2, 1fr); /* Default to 2 columns for highlights */
+            }
+
+            /* Adjust individual highlights cards for better flow on smaller screens */
+            .weather-data .weather-right .highlights .card:nth-of-type(1) { /* AQI card */
+                grid-column: span 2; /* Still span full width */
+            }
+            .weather-data .weather-right .highlights .card:nth-of-type(2) { /* Sunrise/Sunset card */
+                grid-column: span 2; /* Still span full width */
+            }
+            .weather-data .weather-right .highlights .card:nth-of-type(3), /* Humidity */
+            .weather-data .weather-right .highlights .card:nth-of-type(4), /* Pressure */
+            .weather-data .weather-right .highlights .card:nth-of-type(5), /* Visibility */
+            .weather-data .weather-right .highlights .card:nth-of-type(6), /* Wind Speed */
+            .weather-data .weather-right .highlights .card:nth-of-type(7) { /* Feels Like */
+                grid-column: span 1; /* Now each highlight takes half width */
+            }
+
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(3, 1fr); /* Adjust for 2 columns */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 3;
+            }
+        }
+
+        @media(max-width: 660px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start; /* Align header items to start when stacked */
+            }
+
+            .header h2 {
+                margin-bottom: 8px;
+            }
+
+            .header .weather-input {
+                flex-direction: column; /* Stack input and buttons */
+                width: 100%; /* Make input group full width */
+            }
+
+            .header #city_input,
+            #searchBtn,
+            #locationBtn {
+                width: 100%;
+                margin-bottom: 10px;
+                /* Remove extra margins if already handled by gap in flex-direction: column */
+                margin-right: 0;
+            }
+            /* Remove the last margin-bottom for the last button in the stack */
+            .header #locationBtn:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        @media(max-width: 580px) {
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(2, 1fr); /* Even smaller for AQI items */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 2;
+            }
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(3, 1fr); /* More compact hourly forecast */
+            }
+        }
+
+        @media(max-width: 480px) {
+            .weather-data .weather-right .highlights {
+                grid-template-columns: 1fr; /* Stack all highlight cards */
+            }
+             .weather-data .weather-right .highlights .card:nth-of-type(1),
+            .weather-data .weather-right .highlights .card:nth-of-type(2),
+            .weather-data .weather-right .highlights .card:nth-of-type(3),
+            .weather-data .weather-right .highlights .card:nth-of-type(4),
+            .weather-data .weather-right .highlights .card:nth-of-type(5),
+            .weather-data .weather-right .highlights .card:nth-of-type(6),
+            .weather-data .weather-right .highlights .card:nth-of-type(7) {
+                grid-column: span 1; /* All highlight cards now span 1 column */
+            }
+
+            .weather-data .weather-right .highlights .sunrise-sunset {
+                grid-template-columns: 1fr; /* Stack sunrise and sunset */
+            }
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(2, 1fr); /* Even more compact hourly forecast */
+            }
+             /* Ensure image heights are consistent and scale well on small screens */
+            .weather-data .weather-left .current-weather .weather-icon img {
+                height: 40px; /* Adjust as needed */
+            }
+        }
+
+        @media(max-width: 380px) {
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: 1fr; /* Stack all AQI items */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 1;
+            }
+             .weather-data .weather-right .highlights .air-indices .item {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+    </style>
+</head>
 
 <body>
     <div class="container">
@@ -18,14 +542,13 @@
             <div class="weather-input">
                 <input type="text" name="city" id="city_input" placeholder="Enter city name">
                 <button type="button" id="searchBtn">
-                    <img src="search icon.png" height="11px"> Search
+                    <img src="search icon.png" height="11px" alt="Search icon"> Search
                 </button>
                 <button type="button" id="locationBtn">
-                    <img src="current location icon.png" height="11px"> Current Location
+                    <img src="current location icon.png" height="11px" alt="Location icon"> Current Location
                 </button>
             </div>
         </div>
-        <!-- 2nd section --------------------------------------------------->
         <div class="weather-data">
             <div class="weather-left">
                 <div class="card">
@@ -36,13 +559,13 @@
                             <p>____</p>
                         </div>
                         <div class="weather-icon">
-                            <img src="cloud-solid.svg" height="25p">
+                            <img src="cloud-solid.svg" height="25px" alt="Weather icon">
                         </div>
                     </div> <br>
                     <hr>
                     <div class="card-footer">
-                        <p><img src="gps (1).png" height="16px">_______</p>
-                        <p><img src="calendar.png" height="16px">_______</p>
+                        <p><img src="gps (1).png" height="16px" alt="GPS icon">_______</p>
+                        <p><img src="calendar.png" height="16px" alt="Calendar icon">_______</p>
                     </div>
                 </div>
                 <div class="card">
@@ -50,7 +573,7 @@
                     <div class="day-forecast">
                         <div class="forecast-item">
                             <div class="icon-wrapper">
-                                <img src="cloudy (1).png  " height="25px">&nbsp;
+                                <img src="cloudy (1).png" height="25px" alt="Cloudy icon">&nbsp;
                                 <span> ___&deg;c</span>
                             </div>
                             <p>____</p>
@@ -58,7 +581,7 @@
                         </div>
                         <div class="forecast-item">
                             <div class="icon-wrapper">
-                                <img src="cloudy (1).png  " height="25px">&nbsp;
+                                <img src="cloudy (1).png" height="25px" alt="Cloudy icon">&nbsp;
                                 <span> ___&deg;c</span>
                             </div>
                             <p>____</p>
@@ -66,7 +589,7 @@
                         </div>
                         <div class="forecast-item">
                             <div class="icon-wrapper">
-                                <img src="cloudy (1).png  " height="25px">&nbsp;
+                                <img src="cloudy (1).png" height="25px" alt="Cloudy icon">&nbsp;
                                 <span> ___&deg;c</span>
                             </div>
                             <p>____</p>
@@ -74,7 +597,7 @@
                         </div>
                         <div class="forecast-item">
                             <div class="icon-wrapper">
-                                <img src="cloudy (1).png  " height="25px">&nbsp;
+                                <img src="cloudy (1).png" height="25px" alt="Cloudy icon">&nbsp;
                                 <span> ___&deg;c</span>
                             </div>
                             <p>____</p>
@@ -82,7 +605,7 @@
                         </div>
                         <div class="forecast-item">
                             <div class="icon-wrapper">
-                                <img src="cloudy (1).png  " height="25px">&nbsp;
+                                <img src="cloudy (1).png" height="25px" alt="Cloudy icon">&nbsp;
                                 <span> ___&deg;c</span>
                             </div>
                             <p>____</p>
@@ -100,7 +623,7 @@
                             <p class="air-index aqi-1">Good</p>
                         </div>
                         <div class="air-indices">
-                            <img src="wind2 icon.png" height="40px">
+                            <img src="wind2 icon.png" height="40px" alt="Wind icon">
                             <div class="item">
                                 <p>PM2.5</p>
                                 <h2>___</h2>
@@ -142,7 +665,7 @@
                         <div class="sunrise-sunset">
                             <div class="item">
                                 <div class="icon">
-                                    <img src="sunrise (1).png" height="32px">
+                                    <img src="sunrise (1).png" height="32px" alt="Sunrise icon">
                                 </div>
                                 <div>
                                     <p>Sunrise</p>
@@ -151,7 +674,7 @@
                             </div>
                             <div class="item">
                                 <div class="icon">
-                                    <img src="sunset.png" height="32px">
+                                    <img src="sunset.png" height="32px" alt="Sunset icon">
                                 </div>
                                 <div>
                                     <p>Sunset</p>
@@ -165,7 +688,7 @@
                             <p>Humidity </p>
                         </div>
                         <div class="card-item">
-                            <img src="humidity.png" height="25px">
+                            <img src="humidity.png" height="25px" alt="Humidity icon">
                             <h2 id="humidityVal">___%</h2>
                         </div>
                     </div>
@@ -175,7 +698,7 @@
                             <p>Pressure </p>
                         </div>
                         <div class="card-item">
-                            <img src="compass.png" height="25px">
+                            <img src="compass.png" height="25px" alt="Compass icon">
                             <h2 id="pressureVal">___hPa</h2>
                         </div>
                     </div>
@@ -185,7 +708,7 @@
                             <p>Visibility </p>
                         </div>
                         <div class="card-item">
-                            <img src="view.png" height="25px">
+                            <img src="view.png" height="25px" alt="Visibility icon">
                             <h2 id="visibilityVal">___km</h2>
                         </div>
                     </div>
@@ -195,7 +718,7 @@
                             <p>Wind Speed </p>
                         </div>
                         <div class="card-item">
-                            <img src="windspeed arrow.png" height="25px">
+                            <img src="windspeed arrow.png" height="25px" alt="Wind speed icon">
                             <h2 id="windspeedVal">___m/s</h2>
                         </div>
                     </div>
@@ -205,58 +728,58 @@
                             <p>Feels Like </p>
                         </div>
                         <div class="card-item">
-                            <img src="thermometer.png" height="25px">
+                            <img src="thermometer.png" height="25px" alt="Thermometer icon">
                             <h2 id="feelsVal">___&deg;C</h2>
                         </div>
                     </div>
                 </div>
-                <h2>Todat at</h2>
+                <h2>Today at</h2>
                 <div class="hourly-forecast">
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
 
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
 
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
 
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
 
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
 
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
 
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
 
                     <div class="card">
                         <p>9 AM</p>
-                        <img src="cloud-solid.svg" height="25px">
+                        <img src="cloud-solid.svg" height="25px" alt="Cloud icon">
                         <p>___&deg;C</p>
                     </div>
                 </div>
@@ -266,7 +789,268 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="https://momentjs.com/downloads/moment.min.js"></script>
     <script src="https://momentjs.com/downloads/moment-timezone-with-data.min.js"></script>
-    <script src="script.js"></script>
+    <script>
+        // Your existing JavaScript code
+        document.addEventListener('DOMContentLoaded', () => {
+            const cityInput = document.getElementById("city_input");
+            const searchBtn = document.getElementById("searchBtn");
+            const locationBtn = document.getElementById("locationBtn");
+            const api_key = '41b53775cd61a09ee7949c2d8fbb83db';
+            const currentWeatherCard = document.querySelector('.weather-left .card');
+            const fiveDaysForecastCard = document.querySelector('.day-forecast');
+            const aqiCard = document.querySelectorAll('.highlights .card')[0];
+            const sunriseCard = document.querySelectorAll('.highlights .card')[1];
+            const humidityVal = document.getElementById('humidityVal');
+            const pressureVal = document.getElementById('pressureVal');
+            const visibilityVal = document.getElementById('visibilityVal');
+            const windspeedVal = document.getElementById('windspeedVal');
+            const feelsVal = document.getElementById('feelsVal');
+            const hourlyForecastCard = document.querySelector('.hourly-forecast');
+            const aqiList = ['Good', 'Fair', 'Moderate', 'Poor', 'Very Poor'];
+
+            function getWeatherDetails(name, lat, lon, country, state) {
+                const FORECAST_API_URL = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${api_key}`;
+                const WEATHER_API_URL = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${api_key}`;
+                const AIR_POLLUTION_API_URL = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${api_key}`;
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                fetch(AIR_POLLUTION_API_URL)
+                    .then(res => res.json())
+                    .then(data => {
+                        const { co, no, no2, o3, so2, pm2_5, pm10, nh3 } = data.list[0].components;
+                        const aqi = data.list[0].main.aqi;
+                        aqiCard.innerHTML = `
+                            <div class="card-head">
+                                <p>Air Quality Index</p>
+                                <p class="air-index aqi-${aqi}">${aqiList[aqi - 1]}</p>
+                            </div>
+                            <div class="air-indices">
+                                <img src="wind2 icon.png" height="40px" alt="Wind icon">
+                                <div class="item">
+                                    <p>PM2.5</p>
+                                    <h2>${pm2_5}</h2>
+                                </div>
+                                <div class="item">
+                                    <p>PM10</p>
+                                    <h2>${pm10}</h2>
+                                </div>
+                                <div class="item">
+                                    <p>SO2</p>
+                                    <h2>${so2}</h2>
+                                </div>
+                                <div class="item">
+                                    <p>CO</p>
+                                    <h2>${co}</h2>
+                                </div>
+                                <div class="item">
+                                    <p>NO</p>
+                                    <h2>${no}</h2>
+                                </div>
+                                <div class="item">
+                                    <p>NO2</p>
+                                    <h2>${no2}</h2>
+                                </div>
+                                <div class="item">
+                                    <p>NH3</p>
+                                    <h2>${nh3}</h2>
+                                </div>
+                                <div class="item">
+                                    <p>O3</p>
+                                    <h2>${o3}</h2>
+                                </div>
+                            </div>
+                        `;
+                    })
+                    .catch(() => {
+                        alert('Failed to fetch Air Quality Index');
+                    });
+
+                fetch(WEATHER_API_URL)
+                    .then(res => res.json())
+                    .then(data => {
+                        const date = new Date();
+                        const timezoneOffset = data.timezone / 3600; // Convert seconds to hours
+                        // Using moment.js for timezone-aware sunrise/sunset
+                        const sRiseTime = moment.unix(data.sys.sunrise).utcOffset(timezoneOffset).format('h:mm A');
+                        const sSetTime = moment.unix(data.sys.sunset).utcOffset(timezoneOffset).format('h:mm A');
+
+                        currentWeatherCard.innerHTML = `
+                            <div class="current-weather">
+                                <div class="details">
+                                    <p>Now</p>
+                                    <h2>${(data.main.temp - 273.15).toFixed(2)}&deg;C</h2>
+                                    <p>${data.weather[0].description}</p>
+                                </div>
+                                <div class="weather-icon">
+                                    <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}.png" height="25px" alt="${data.weather[0].description} icon">
+                                </div>
+                            </div> <br>
+                            <hr>
+                            <div class="card-footer">
+                                <p><img src="gps (1).png" height="16px" alt="GPS icon">${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}</p>
+                                <p><img src="calendar.png" height="16px" alt="Calendar icon">${name}, ${country}</p>
+                            </div>
+                        `;
+
+                        sunriseCard.innerHTML = `
+                            <div class="card-head">
+                                <p>Sunrise & Sunset</p>
+                            </div>
+                            <div class="sunrise-sunset">
+                                <div class="item">
+                                    <div class="icon">
+                                        <img src="sunrise (1).png" height="32px" alt="Sunrise icon">
+                                    </div>
+                                    <div>
+                                        <p>Sunrise</p>
+                                        <h2>${sRiseTime}</h2>
+                                    </div>
+                                </div>
+                                <div class="item">
+                                    <div class="icon">
+                                        <img src="sunset.png" height="32px" alt="Sunset icon">
+                                    </div>
+                                    <div>
+                                        <p>Sunset</p>
+                                        <h2>${sSetTime}</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        humidityVal.innerHTML = `${data.main.humidity}%`;
+                        pressureVal.innerHTML = `${data.main.pressure} hPa`;
+                        visibilityVal.innerHTML = `${data.visibility / 1000} km`;
+                        windspeedVal.innerHTML = `${data.wind.speed} m/s`;
+                        feelsVal.innerHTML = `${(data.main.feels_like - 273.15).toFixed(2)}&deg;C`;
+                    })
+                    .catch(() => {
+                        alert('Failed to fetch current weather');
+                    });
+
+                fetch(FORECAST_API_URL)
+                    .then(res => res.json())
+                    .then(data => {
+                        const hourlyForecast = data.list;
+                        hourlyForecastCard.innerHTML = '';
+                        // Limit to 8 hourly forecasts, assuming data.list has enough
+                        for (let i = 0; i < Math.min(hourlyForecast.length, 8); i++) {
+                            const hrForecastDate = new Date(hourlyForecast[i].dt_txt);
+                            let hr = hrForecastDate.getHours();
+                            let a = 'PM';
+                            if (hr < 12) a = 'AM';
+                            if (hr === 0) hr = 12;
+                            if (hr > 12) hr -= 12;
+                            hourlyForecastCard.innerHTML += `
+                                <div class="card">
+                                    <p>${hr} ${a}</p>
+                                    <img src="https://openweathermap.org/img/wn/${hourlyForecast[i].weather[0].icon}.png" height="25px" alt="${hourlyForecast[i].weather[0].description} icon">
+                                    <p>${(hourlyForecast[i].main.temp - 273.15).toFixed(2)}&deg;C</p>
+                                </div>
+                            `;
+                        }
+
+                        const uniqueForecastDays = [];
+                        const fiveDaysForecast = data.list.filter(forecast => {
+                            const forecastDate = new Date(forecast.dt_txt).getDate();
+                            // Only include one forecast per day (around noon is typical)
+                            if (!uniqueForecastDays.includes(forecastDate) && new Date(forecast.dt_txt).getHours() >= 12 && new Date(forecast.dt_txt).getHours() < 18) {
+                                uniqueForecastDays.push(forecastDate);
+                                return true;
+                            }
+                            return false;
+                        }).slice(0, 5); // Ensure only 5 days
+
+                        fiveDaysForecastCard.innerHTML = '';
+                        if (fiveDaysForecast.length > 0) {
+                            // Start from the second day if the first one is "today"
+                            for (let i = 0; i < fiveDaysForecast.length; i++) {
+                                const date = new Date(fiveDaysForecast[i].dt_txt);
+                                fiveDaysForecastCard.innerHTML += `
+                                    <div class="forecast-item">
+                                        <div class="icon-wrapper">
+                                            <img src="https://openweathermap.org/img/wn/${fiveDaysForecast[i].weather[0].icon}.png" height="25px" alt="${fiveDaysForecast[i].weather[0].description} icon">&nbsp;
+                                            <span>${(fiveDaysForecast[i].main.temp - 273.15).toFixed(2)}&deg;C</span>
+                                        </div>
+                                        <p>${date.getDate()} ${months[date.getMonth()]}</p>
+                                        <p>${days[date.getDay()]}</p>
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            fiveDaysForecastCard.innerHTML = '<p style="text-align:center; color:#999;">No 5-day forecast available.</p>';
+                        }
+                    })
+                    .catch(() => {
+                        alert('Failed to fetch weather forecast');
+                    });
+            }
+
+            function getCityCoordinates() {
+                const cityName = cityInput.value.trim();
+                cityInput.value = ''; // Clear input field immediately
+                if (!cityName) {
+                    alert('Please enter a city name.');
+                    return;
+                }
+                const GEOCODING_API_URL = `https://api.openweathermap.org/geo/1.0/direct?q=${cityName}&limit=1&appid=${api_key}`;
+                fetch(GEOCODING_API_URL)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            alert(`City "${cityName}" not found.`);
+                            return;
+                        }
+                        const { lat, lon, country, state } = data[0];
+                        getWeatherDetails(cityName, lat, lon, country, state);
+                    })
+                    .catch(() => {
+                        alert('Failed to fetch city coordinates');
+                    });
+            }
+
+            function getCurrentLocation() {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(position => {
+                        const { latitude, longitude } = position.coords;
+                        const REVERSE_GEOCODING_API_URL = `https://api.openweathermap.org/geo/1.0/reverse?lat=${latitude}&lon=${longitude}&limit=1&appid=${api_key}`;
+                        fetch(REVERSE_GEOCODING_API_URL)
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.length === 0) {
+                                    alert('Location not found');
+                                    return;
+                                }
+                                const { name, country, state } = data[0];
+                                getWeatherDetails(name, latitude, longitude, country, state);
+                            })
+                            .catch(() => {
+                                alert('Failed to fetch location details');
+                            });
+                    }, (error) => { // Geolocation error handler
+                        if (error.code === error.PERMISSION_DENIED) {
+                            alert('Location permission denied. Please enable location access in your browser settings to use this feature.');
+                        } else {
+                            alert('Failed to get current location: ' + error.message);
+                        }
+                    });
+                } else {
+                    alert('Geolocation is not supported by this browser.');
+                }
+            }
+
+            searchBtn.addEventListener('click', getCityCoordinates);
+            locationBtn.addEventListener('click', getCurrentLocation);
+            cityInput.addEventListener('keydown', (e) => { // Allow pressing Enter key to search
+                if (e.key === 'Enter') {
+                    getCityCoordinates();
+                }
+            });
+
+            // Fetch weather for a default city on load (e.g., Sadrana, Haryana, India)
+            getWeatherDetails('Sadrana', 28.3752, 76.8184, 'IN', 'Haryana');
+        });
+    </script>
 </body>
 
 </html>
