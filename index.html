@@ -4,7 +4,535 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Weather App - JavaScript</title>
-    <link rel="stylesheet" href="style.css">
+<!--     <link rel="stylesheet" href="style.css"> -->
+     <style>
+        :root {
+            --bg-color1: #212529;
+            --bg-color2: #2a2b2d;
+            --aqi-1: #d4e157;
+            --aqi-2: #ffee58;
+            --aqi-3: #ffca28;
+            --aqi-4: #ff7043;
+            --aqi-5: #ef5350;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--bg-color1);
+            color: #fff;
+            font-family: sans-serif;
+            padding: 0 15px;
+            /* Added overflow-x: hidden to prevent horizontal scroll on small screens */
+            overflow-x: hidden;
+        }
+
+        hr {
+            margin-bottom: 10px;
+        }
+
+        .container {
+            max-width: 1200px; /* Added max-width to container for larger screens */
+            margin: 0 auto; /* Center the container */
+        }
+
+        .header {
+            position: sticky;
+            top: 0;
+            background: var(--bg-color1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 15px 0;
+            z-index: 100; /* Ensure header stays on top */
+            flex-wrap: wrap; /* Allow header items to wrap on smaller screens */
+            gap: 10px; /* Add some space between items when wrapped */
+        }
+
+        .header h2 {
+            flex-shrink: 0; /* Prevent title from shrinking */
+        }
+
+        .header .weather-input {
+            display: flex;
+            gap: 10px;
+            flex-grow: 1; /* Allow input group to take available space */
+            flex-wrap: wrap; /* Allow input and buttons to wrap */
+            justify-content: flex-end; /* Align to the right by default */
+        }
+
+        .header #city_input {
+            background-color: var(--bg-color2);
+            border: none;
+            padding: 12px;
+            font-size: 16px;
+            border-radius: 25px;
+            color: #fff;
+            flex-grow: 1; /* Allow input to grow */
+            min-width: 180px; /* Minimum width for input */
+
+            &:focus {
+                outline: none;
+            }
+        }
+
+        .header #searchBtn,
+        .header #locationBtn {
+            border: none;
+            font-size: 16px;
+            padding: 12px;
+            border-radius: 25px;
+            cursor: pointer;
+            display: flex; /* Make buttons flex containers */
+            align-items: center; /* Vertically center content */
+            gap: 5px; /* Space between icon and text */
+            white-space: nowrap; /* Prevent text from wrapping */
+        }
+
+        .header #searchBtn {
+            background-color: #fff;
+        }
+
+        .header #searchBtn:hover {
+            background-color: #ababab;
+        }
+
+        .header #locationBtn {
+            background-color: #ea6e4b;
+        }
+
+        .header #locationBtn:hover {
+            background-color: #ea4b1f;
+        }
+
+        /* Styling for the image tags within buttons */
+        .header #searchBtn img,
+        .header #locationBtn img {
+            height: 16px; /* Adjusted height for better visibility */
+            width: auto;
+        }
+
+        .card {
+            background-color: var(--bg-color2);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #999;
+        }
+
+        .card h2 {
+            font-size: 32px;
+            font-weight: 500;
+        }
+
+        .weather-data {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .weather-data .weather-left {
+            grid-column: span 1;
+        }
+
+        .weather-data .weather-left .current-weather {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .weather-data .weather-left .current-weather h2 {
+            margin: 7px 0;
+        }
+
+        .weather-data .weather-left .current-weather p {
+            color: #fff;
+        }
+
+        .weather-data .weather-left .card-footer p {
+            font-size: 14px;
+            margin-bottom: 12px;
+            display: flex; /* Make these flex containers */
+            align-items: center; /* Align icon and text */
+            gap: 8px; /* Space between icon and text */
+        }
+
+        .weather-data .weather-left .card-footer img {
+            height: 16px; /* Ensure icon size consistency */
+            width: auto;
+        }
+
+        .weather-data .weather-left .forecast-item {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            place-items: center;
+            margin-bottom: 15px;
+            text-align: center; /* Center text within forecast items */
+        }
+
+        .weather-data .weather-left .forecast-item .icon-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 5px; /* Space between icon and temperature */
+            justify-content: center; /* Center content in icon wrapper */
+        }
+
+        .weather-data .weather-left .forecast-item img {
+            height: 25px;
+            width: auto;
+        }
+
+        .weather-data .weather-right {
+            grid-column: span 3;
+        }
+
+        .weather-data .weather-right h2 {
+            margin-bottom: 10px;
+        }
+
+        .weather-data .weather-right .highlights {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            column-gap: 15px;
+            row-gap: 15px; /* Added row-gap for consistency */
+        }
+
+        .weather-data .weather-right .highlights .card:nth-of-type(1),
+        .weather-data .weather-right .highlights .card:nth-of-type(2) {
+            grid-column: span 2;
+        }
+
+        .weather-data .weather-right .highlights .card-head {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            align-items: center; /* Align items vertically in card head */
+            flex-wrap: wrap; /* Allow wrapping for long titles/indices */
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index {
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 15px;
+            white-space: nowrap; /* Prevent text wrapping inside AQI status */
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-1 {
+            background-color: var(--aqi-1);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-2 {
+            background-color: var(--aqi-2);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-3 {
+            background-color: var(--aqi-3);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-4 {
+            background-color: var(--aqi-4);
+        }
+
+        .weather-data .weather-right .highlights .card-head .air-index.aqi-5 {
+            background-color: var(--aqi-5);
+        }
+
+        .weather-data .weather-right .highlights .air-indices {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); /* Default to 5 columns for better use of space */
+            place-items: center;
+            gap: 10px; /* Gap between items */
+        }
+        .weather-data .weather-right .highlights .air-indices img {
+            height: 40px;
+            width: auto;
+            grid-column: span 5; /* Make the main icon span all columns */
+            margin-bottom: 10px;
+        }
+
+        .weather-data .weather-right .highlights .air-indices p {
+            text-align: center;
+        }
+        .weather-data .weather-right .highlights .air-indices .item {
+            text-align: center;
+        }
+
+
+        .weather-data .weather-right .highlights .sunrise-sunset {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px; /* Gap between sunrise and sunset items */
+        }
+
+        .weather-data .weather-right .highlights .sunrise-sunset .item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .weather-data .weather-right .highlights .sunrise-sunset .item .icon img {
+            height: 32px;
+            width: auto;
+        }
+
+        .weather-data .weather-right .highlights .sunrise-sunset .item h2 {
+            margin-bottom: 0; /* Remove extra margin */
+            font-size: 24px; /* Adjust font size */
+        }
+        .weather-data .weather-right .highlights .sunrise-sunset .item p {
+            color: #fff; /* Ensure text is visible */
+        }
+
+
+        .weather-data .weather-right .highlights .card-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center; /* Vertically align items */
+            gap: 10px; /* Space between icon and value */
+        }
+        .weather-data .weather-right .highlights .card-item img {
+            height: 25px; /* Standardize icon size */
+            width: auto;
+        }
+        .weather-data .weather-right .highlights .card-item h2 {
+            font-size: 24px; /* Adjust font size for readability */
+            margin: 0; /* Remove default h2 margin */
+        }
+
+
+        .weather-data .weather-right .hourly-forecast {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            column-gap: 10px;
+            overflow-x: auto; /* Enable horizontal scrolling for hourly forecast */
+            padding-bottom: 10px; /* Add padding for scrollbar visibility */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+
+        .weather-data .weather-right .hourly-forecast .card {
+            text-align: center;
+            min-width: 80px; /* Ensure cards don't get too small */
+            flex-shrink: 0; /* Prevent cards from shrinking */
+        }
+        .weather-data .weather-right .hourly-forecast .card img {
+            height: 25px;
+            width: auto;
+        }
+
+
+        /* Media Queries - Ordered from largest to smallest for clarity */
+
+        @media(max-width: 1100px) {
+            .weather-data {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .weather-data .weather-right {
+                grid-column: span 2;
+            }
+
+            .weather-data .weather-right .highlights {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .weather-data .weather-right .highlights .card:nth-of-type(1) {
+                grid-column: span 3;
+            }
+
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(4, 1fr); /* Adjust for 3 columns */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 4;
+            }
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        @media(max-width: 1040px) {
+            .weather-data {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .weather-data .weather-right {
+                grid-column: span 1;
+            }
+
+            .weather-data .weather-right .highlights {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .weather-data .weather-right .highlights .card:nth-of-type(1) {
+                grid-column: span 2;
+            }
+
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(3, 1fr); /* Adjust for 2 columns */
+            }
+            .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 3;
+            }
+
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        /* This media query seems redundant or potentially problematic with the 1040px one.
+           It's setting highlights cards to span 3 columns, which might conflict with 1040px's 2 columns.
+           I'll adjust it to ensure smooth transition.
+           If the intent is for cards to span 3 at specific larger widths, it should be adjusted.
+           For now, I'll integrate it into the 850px breakpoint or remove if conflicting.
+        */
+        /* @media(max-width: 992px) {
+            .weather-data .weather-right .highlights {
+                & .card {
+                    grid-column: span 3;
+                }
+
+                & .air-indices {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
+        } */
+
+
+        @media(max-width: 850px) {
+            .weather-data {
+                grid-template-columns: 1fr; /* Stack columns on top of each other */
+            }
+
+            .weather-data .weather-left {
+                grid-column: span 1; /* Reset span for single column layout */
+            }
+            .weather-data .weather-right {
+                grid-column: span 1; /* Reset span for single column layout */
+            }
+
+
+            .weather-data .weather-right .highlights {
+                grid-template-columns: repeat(2, 1fr); /* Default to 2 columns for highlights */
+            }
+
+            /* Adjust individual highlights cards for better flow on smaller screens */
+            .weather-data .weather-right .highlights .card:nth-of-type(1) { /* AQI card */
+                grid-column: span 2; /* Still span full width */
+            }
+            .weather-data .weather-right .highlights .card:nth-of-type(2) { /* Sunrise/Sunset card */
+                grid-column: span 2; /* Still span full width */
+            }
+            .weather-data .weather-right .highlights .card:nth-of-type(3), /* Humidity */
+            .weather-data .weather-right .highlights .card:nth-of-type(4), /* Pressure */
+            .weather-data .weather-right .highlights .card:nth-of-type(5), /* Visibility */
+            .weather-data .weather-right .highlights .card:nth-of-type(6), /* Wind Speed */
+            .weather-data .weather-right .highlights .card:nth-of-type(7) { /* Feels Like */
+                grid-column: span 1; /* Now each highlight takes half width */
+            }
+
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(3, 1fr); /* Adjust for 2 columns */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 3;
+            }
+        }
+
+        @media(max-width: 660px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start; /* Align header items to start when stacked */
+            }
+
+            .header h2 {
+                margin-bottom: 8px;
+            }
+
+            .header .weather-input {
+                flex-direction: column; /* Stack input and buttons */
+                width: 100%; /* Make input group full width */
+            }
+
+            .header #city_input,
+            #searchBtn,
+            #locationBtn {
+                width: 100%;
+                margin-bottom: 10px;
+                /* Remove extra margins if already handled by gap in flex-direction: column */
+                margin-right: 0;
+            }
+            /* Remove the last margin-bottom for the last button in the stack */
+            .header #locationBtn:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        @media(max-width: 580px) {
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: repeat(2, 1fr); /* Even smaller for AQI items */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 2;
+            }
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(3, 1fr); /* More compact hourly forecast */
+            }
+        }
+
+        @media(max-width: 480px) {
+            .weather-data .weather-right .highlights {
+                grid-template-columns: 1fr; /* Stack all highlight cards */
+            }
+             .weather-data .weather-right .highlights .card:nth-of-type(1),
+            .weather-data .weather-right .highlights .card:nth-of-type(2),
+            .weather-data .weather-right .highlights .card:nth-of-type(3),
+            .weather-data .weather-right .highlights .card:nth-of-type(4),
+            .weather-data .weather-right .highlights .card:nth-of-type(5),
+            .weather-data .weather-right .highlights .card:nth-of-type(6),
+            .weather-data .weather-right .highlights .card:nth-of-type(7) {
+                grid-column: span 1; /* All highlight cards now span 1 column */
+            }
+
+            .weather-data .weather-right .highlights .sunrise-sunset {
+                grid-template-columns: 1fr; /* Stack sunrise and sunset */
+            }
+
+            .weather-data .weather-right .hourly-forecast {
+                grid-template-columns: repeat(2, 1fr); /* Even more compact hourly forecast */
+            }
+             /* Ensure image heights are consistent and scale well on small screens */
+            .weather-data .weather-left .current-weather .weather-icon img {
+                height: 40px; /* Adjust as needed */
+            }
+        }
+
+        @media(max-width: 380px) {
+            .weather-data .weather-right .highlights .air-indices {
+                grid-template-columns: 1fr; /* Stack all AQI items */
+            }
+             .weather-data .weather-right .highlights .air-indices img {
+                grid-column: span 1;
+            }
+             .weather-data .weather-right .highlights .air-indices .item {
+                width: 100%;
+                text-align: center;
+            }
+        }
+
+    </style>
    
 </head>
 
